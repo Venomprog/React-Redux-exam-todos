@@ -1,0 +1,50 @@
+.todos{
+
+  &-filters{
+    display: flex;
+    gap: 20px;
+
+    button{
+      border: 2px solid rgb(0, 255, 242);
+      padding: 10px;
+      font-weight: 700;
+      border-radius: 16px;
+      background: none;
+      cursor: pointer;
+      transition: all 0.5s;
+
+      &:hover{
+        background: rgb(0, 255, 242);
+      }
+    }
+  }
+
+  &-list{
+    margin-top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    &__item{
+      padding:  5px;
+      display: flex;
+      border: 2px solid black;
+      gap: 20px;
+
+      &-user{
+        color: blue;
+      }
+
+      &-title{
+        color: orange;
+      }
+
+      &-completed{
+        color: red;
+        &._completed{
+          color: green;
+        }
+      }
+    }
+  }
+}
