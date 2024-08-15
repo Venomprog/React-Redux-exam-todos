@@ -8,25 +8,33 @@ import './todosList.scss'
 const TodosList = () => {
   const dispatch = useDispatch();
 
-  const filteredTodosSelector = createSelector(
-    (state) => state.filters.activeFilter,
-    (state) => state.todos.todos,
-    (filter, todos) => {
-        if (filter === 'all'){
-            return todos
-        } else {
-            return todos.filter(item => item.userId === filter)
-        }
-    }
-  )
-
-  const filteredTodos = useSelector(filteredTodosSelector);
 
   useEffect(() => {
     dispatch(fetchTodos());
   }, []);
 
+  const filteredTodosSelector = createSelector(
+    (state) => state.filters.selectedFilters,
+    (state) => state.todos.todos,
+    (filter, todos) => {
+        let todosArr = [];
+        if (filter.length === 0){
+          return todos
+        }
+
+        for (let i = 0; i < filter.length; i++){
+          const filteredTodos = todos.filter(item => item.userId === filter[i]);
+          todosArr = [...todosArr, ...filteredTodos];
+        }
+        return todosArr
+    }
+  )
+
+
+  const filteredTodos = useSelector(filteredTodosSelector);
+
   const renderItems = (arr) => {
+    if (arr === undefined) return
     if (arr.length === 0){
       return
     }
@@ -46,5 +54,18 @@ const TodosList = () => {
     </div>
   );
 };
+
+// const mapStateToProps = (state) => {
+//   return {
+//     filters: state.filters.selectedFilters,
+//     todos: state.todos.todos
+//   }
+// }
+
+// const mapDispatchToProps = (dispatch) => {
+//   return {
+//     fetchTodos: () => dispatch({type: 'TODOS_FETCHING'})
+//   }
+// }
 
 export default TodosList;
