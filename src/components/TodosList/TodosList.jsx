@@ -1,24 +1,31 @@
 import React, { useEffect} from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { createSelector } from '@reduxjs/toolkit';
-import { fetchTodos } from './todosSlice';
+import { connect } from 'react-redux';
 import TodosListItem from '../TodosListItem/TodosListItem';
 import './todosList.scss'
 
-const TodosList = () => {
-  const dispatch = useDispatch();
+const TodosList = ({todos, checkedTodos, selectedFilters, todosFetch}) => {
 
 
   useEffect(() => {
-    dispatch(fetchTodos());
+
+    async function fetchMyAPI() {
+      let response = await fetch("https://jsonplaceholder.typicode.com/todos")
+      response = await response.json()
+      todosFetch(response);
+    }
+
+    fetchMyAPI()
+
   }, []);
 
-  const filteredTodosSelector = createSelector(
-    (state) => state.filters.selectedFilters,
-    (state) => state.todos.todos,
-    (filter, todos) => {
-        let todosArr = [];
+
+  function filteringTodos(todos, filter){
+    let todosArr = [];
         if (filter.length === 0){
+          if (checkedTodos){
+            const completedTodos = todos.filter(item => item.completed === true);
+            return completedTodos
+          }
           return todos
         }
 
@@ -26,12 +33,13 @@ const TodosList = () => {
           const filteredTodos = todos.filter(item => item.userId === filter[i]);
           todosArr = [...todosArr, ...filteredTodos];
         }
+        if (checkedTodos){
+          const completedTodos = todosArr.filter(item => item.completed === true);
+          return completedTodos
+        }
         return todosArr
-    }
-  )
+  }
 
-
-  const filteredTodos = useSelector(filteredTodosSelector);
 
   const renderItems = (arr) => {
     if (arr === undefined) return
@@ -46,7 +54,7 @@ const TodosList = () => {
 
   }
 
-  const elements = renderItems(filteredTodos)
+  const elements = renderItems(filteringTodos(todos, selectedFilters))
 
   return (
     <div className='todos-list'>
@@ -55,17 +63,20 @@ const TodosList = () => {
   );
 };
 
-// const mapStateToProps = (state) => {
-//   return {
-//     filters: state.filters.selectedFilters,
-//     todos: state.todos.todos
-//   }
-// }
 
-// const mapDispatchToProps = (dispatch) => {
-//   return {
-//     fetchTodos: () => dispatch({type: 'TODOS_FETCHING'})
-//   }
-// }
+const mapStateToProps = (state) => {
 
-export default TodosList;
+  return {
+    todos: state.todos,
+    selectedFilters: state.selectedFilters,
+    checkedTodos: state.filterCompleted,
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    todosFetch: (todos) => dispatch({type: 'TODOS_FETCHING', payload: todos})
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(TodosList);

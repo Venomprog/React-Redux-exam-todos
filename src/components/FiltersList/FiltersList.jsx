@@ -1,36 +1,42 @@
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { filtersChanging } from './filtersSlice';
+import { connect } from 'react-redux';
 import { useEffect } from 'react';
-import { fetchFilters, selectedFiltersChanging, selectedFiltersRemove } from './filtersSlice';
 
-const FiltersList = () => {
-  const filters = useSelector(state => state.filters.filters);
-  const dispatch = useDispatch();
+const FiltersList = ({filters, filtersFetch, selectedFiltersChanging, selectedFiltersRemove, checkedFilterChanging, checkedTodos}) => {
   let checkedFilters = [];
 
   useEffect(() => {
-    dispatch(fetchFilters());
+    async function fetchMyAPI() {
+      let response = await fetch("https://jsonplaceholder.typicode.com/todos")
+      response = await response.json()
+      filtersFetch(response);
+    }
+
+    fetchMyAPI()
   }, []);
 
-  const filterTodos = (filter) => {
-    dispatch(filtersChanging(filter))
-  }
 
   const addCheckFilters = (event, filter) => {
     event.stopPropagation();
     const input = event.target
     if (input.checked) {
-      checkedFilters.push(filter)
-      dispatch(selectedFiltersChanging(filter));
+      if (filter === 'completed'){
+        checkedFilterChanging(true)
+      } else {
+
+        checkedFilters.push(filter)
+        selectedFiltersChanging(filter)
+      }
     } else {
-      const newArr = checkedFilters.filter(item => item !== filter)
-      checkedFilters = newArr;
-      dispatch(selectedFiltersRemove(filter));
+      if (filter === 'completed'){
+        checkedFilterChanging(false)
+      } else {
+        const newArr = checkedFilters.filter(item => item !== filter)
+        checkedFilters = newArr;
+        selectedFiltersRemove(filter)
+      }
     }
 
-    console.log(checkedFilters)
-    // dispatch(selectedFiltersChanging(checkedFilters));
   }
 
   const renderFilters = (arr) => {
@@ -45,11 +51,8 @@ const FiltersList = () => {
     }
 
     const newSetArr = Array.from(new Set(newArr));
-    newSetArr.push('all')
+    newSetArr.push('completed')
 
-    // return arr.map((item, i) => {
-    //   return <button onClick={() => filterTodos(item)} key={i}>Фильтровать по {item}</button>
-    // })
     return newSetArr.map((item, i) => {
       return (
         <label className='checkbox-label' onClick={(e) => addCheckFilters(e, item)} key={i}>
@@ -69,4 +72,25 @@ const FiltersList = () => {
   );
 };
 
-export default FiltersList;
+
+const mapStateToProps = (state) => {
+
+  return {
+    todos: state.todos,
+    filters: state.filters,
+    selectedFilters: state.selectedFilters,
+    filterCompleted: state.filterCompleted,
+    checkedTodos: state.filterCompleted,
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    filtersFetch: (todos) => dispatch({type: 'FILTERS_FETCHING', payload: todos}),
+    selectedFiltersChanging: (filter) => dispatch({type: 'SELECTED_FILTERS_CHANGING', payload: filter}),
+    selectedFiltersRemove: (filter) => dispatch({type: 'SELECTED_FILTERS_REMOVE', payload: filter}),
+    checkedFilterChanging: (isChecked) => dispatch({type: 'CHECKED_FILTERS_CHANGING', payload: isChecked})
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(FiltersList);
